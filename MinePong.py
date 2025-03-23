@@ -1,5 +1,5 @@
 from pygame import *
-from random import randint
+from random import choice
 
 
 class GameSprite(sprite.Sprite):
@@ -18,12 +18,55 @@ class GameSprite(sprite.Sprite):
         return self.rect.collidepoint(x,y)
 
 class Player(GameSprite):
-    def update(self):
+    def updateL(self):
         keys = key.get_pressed()
         if keys[K_w] and self.rect.y>0:
             self.rect.y-=self.speed
-        if keys[K_s] and self.rect.y>100:
+        if keys[K_s] and self.rect.y<350:
             self.rect.y += self.speed
+
+    def updateR(self):
+        keys = key.get_pressed()
+        if keys[K_UP] and self.rect.y>0:
+            self.rect.y-=self.speed
+        if keys[K_DOWN] and self.rect.y<350:
+            self.rect.y += self.speed
+
+class Ball(GameSprite):
+    def __init__(self, img, x, y, w, h, speed):
+        super().__init__(img, x, y, w, h, speed)
+        self.direct = [0,0]
+
+    def update(self):
+        global score_l, score_r
+        self.rect.x += self.speed*self.direct[0]
+        self.rect.y += self.speed*self.direct[1]
+        if self.rect.y <= 0 or self.rect.y >= 500-self.rect.height:
+            self.direct[1] *= -1
+        #if self.rect.x <= 0 or self.rect.x >= 700-self.rect.width:
+            #self.direct[0] *= -1
+        if self.rect.colliderect(playerL) or self.rect.colliderect(playerR):
+            self.direct[0] *= -1
+        if self.rect.x <= 0:
+            score_r += 1
+            self.start()
+        if self.rect.x >= 700-self.rect.width:
+            score_r += 1
+            self.start()
+
+
+
+
+    def start(self):
+        self.rect.x = 325
+        self.rect.y = 225
+        ball.direct[0] = choice([-1,1])
+        ball.direct[1] = choice([-1,1])
+
+
+
+
+
 
 
 
@@ -34,13 +77,22 @@ window = display.set_mode((700,500))
 display.set_caption("MinePong")
 
 background = transform.scale(image.load('fonh.jpg'), (700,500))
-player = Player('mech.png', 20,400,200,170,5)
+playerL = Player('mech-Photoroom.png', 5,350,70,150,5)
+playerR = Player('mech-Photoroom.png', 625,350,70,150,5)
+
+ball = Ball('tnt.png', 350-25, 250-25, 80, 80, 5)
+ball.direct[0] = choice([-1,1])
+ball.direct[1] = choice([-1,1])
+
 
 clock = time.Clock()
 fps = 60
 
 
 game = True
+score_r = 0
+score_l = 0
+rule = 3
 finish = True
 
 
@@ -52,8 +104,14 @@ while game:
     window.blit(background, (0,0))
 
 
-    player.update()
-    player.reset()
+    playerL.updateL()
+    playerL.reset()
+
+    playerR.updateR()
+    playerR.reset()
+
+    ball.update()
+    ball.reset()
 
 
     clock.tick(fps)
